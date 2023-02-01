@@ -23,6 +23,11 @@ public sealed class clsPlayerRepository<TI, TC> : clsDataAccess<clsPlayerEntityM
         return await add<TI>(p).ConfigureAwait(false);
     }
 
+    public async Task<clsPlayerEntityModel<TI, TC>>? getPlayerById(TI id)
+    {
+        return await getEntity(id).ConfigureAwait(false);
+    }
+
     public async Task<IEnumerable<clsPlayerEntityModel<TI, TC>>> addPlayers(IEnumerable<clsNewPlayer> players)
     {
         var r = new List<clsPlayerEntityModel<TI, TC>>(players.Count());

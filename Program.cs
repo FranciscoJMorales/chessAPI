@@ -43,7 +43,14 @@ try
         return "hola mundo";
     });
 
-    app.MapPost("player", 
+    app.MapGet("player/{id}",
+    [AllowAnonymous] async(IPlayerBusiness<int> bs, int id) => {
+        var player = await bs.getPlayerById(id);
+        if (player != null) return Results.Ok(player);
+        return Results.NotFound(id);
+    });
+
+    app.MapPost("player",
     [AllowAnonymous] async(IPlayerBusiness<int> bs, clsNewPlayer newPlayer) => Results.Ok(await bs.addPlayer(newPlayer)));
 
     app.Run();
