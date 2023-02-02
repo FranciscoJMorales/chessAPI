@@ -53,6 +53,13 @@ try
     app.MapPost("player",
     [AllowAnonymous] async(IPlayerBusiness<int> bs, clsNewPlayer newPlayer) => Results.Ok(await bs.addPlayer(newPlayer)));
 
+    app.MapPut("player/{id}",
+    [AllowAnonymous] async(IPlayerBusiness<int> bs, int id, clsNewPlayer newPlayer) => {
+        var player = await bs.updatePlayer(id, newPlayer);
+        if (player != null) return Results.Ok(player);
+        return Results.NotFound(id);
+    });
+
     app.Run();
 }
 catch (Exception ex)

@@ -7,4 +7,5 @@ public interface IPlayerBusiness<TI>
 {
     Task<clsPlayer<TI>> addPlayer(clsNewPlayer newPlayer);
     Task<clsPlayer<TI>>? getPlayerById(TI id);
+    Task<clsPlayer<TI>>? updatePlayer(TI id, clsNewPlayer newPlayer);
 }
