@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using chessAPI;
 using chessAPI.business.interfaces;
 using chessAPI.models.player;
+using chessAPI.models.game;
 using Microsoft.AspNetCore.Authorization;
 using Serilog;
 using Serilog.Events;
@@ -57,6 +58,23 @@ try
     [AllowAnonymous] async(IPlayerBusiness<int> bs, int id, clsNewPlayer newPlayer) => {
         var player = await bs.updatePlayer(id, newPlayer);
         if (player != null) return Results.Ok(player);
+        return Results.NotFound(id);
+    });
+
+    app.MapGet("game/{id}",
+    [AllowAnonymous] async(IGameBusiness<int> bs, int id) => {
+        var game = await bs.getGameById(id);
+        if (game != null) return Results.Ok(game);
+        return Results.NotFound(id);
+    });
+
+    app.MapPost("game",
+    [AllowAnonymous] async(IGameBusiness<int> bs, clsNewGame newGame) => Results.Ok(await bs.createGame(newGame)));
+
+    app.MapPut("game/{id}",
+    [AllowAnonymous] async(IGameBusiness<int> bs, int id, clsUpdateGame newGame) => {
+        var game = await bs.updateGame(id, newGame);
+        if (game != null) return Results.Ok(game);
         return Results.NotFound(id);
     });
 
