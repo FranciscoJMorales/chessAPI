@@ -13,7 +13,7 @@ public sealed class qGame : IQGame
 
     private const string _add = @"
     INSERT INTO public.game(whites, blacks, turn, winner)
-	VALUES (@WHITES, @BLACKS, TRUE, 0) RETURNING id";
+	VALUES (@ID, 0, TRUE, 0) RETURNING id";
 
     private const string _delete = @"
     DELETE FROM public.game 
@@ -33,4 +33,11 @@ public sealed class qGame : IQGame
     public string DeleteDataEntity => _delete;
 
     public string UpdateWholeEntity => _update;
+
+    private const string _teamExists = @"
+    SELECT id 
+    FROM public.team
+    WHERE id=@ID";
+
+   public string TeamExists => _teamExists;
 }

@@ -5,9 +5,7 @@ public sealed class clsNewGame
     public clsNewGame()
     {
         whites = 0;
-        blacks = 0;
     }
 
     public int whites { get; set; }
-    public int blacks { get; set; }
 }

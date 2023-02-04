@@ -69,7 +69,11 @@ try
     });
 
     app.MapPost("game",
-    [AllowAnonymous] async(IGameBusiness<int> bs, clsNewGame newGame) => Results.Ok(await bs.createGame(newGame)));
+    [AllowAnonymous] async(IGameBusiness<int> bs, clsNewGame newGame) => {
+        var game = await bs.createGame(newGame);
+        if (game != null) return Results.Ok(game);
+        return Results.NotFound(newGame.whites);
+    });
 
     app.MapPut("game/{id}",
     [AllowAnonymous] async(IGameBusiness<int> bs, int id, clsUpdateGame newGame) => {
