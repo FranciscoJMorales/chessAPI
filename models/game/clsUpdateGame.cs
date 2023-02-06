@@ -1,13 +1,12 @@
 namespace chessAPI.models.game;
 
-public sealed class clsUpdateGame
+public sealed class clsUpdateGame<TI>
+    where TI : struct, IEquatable<TI>
 {
     public clsUpdateGame()
     {
-        turn = false;
-        winner = 0;
+        blacks = default(TI);
     }
 
-    public bool turn { get; set; }
-    public int winner { get; set; }
+    public TI blacks { get; set; }
 }

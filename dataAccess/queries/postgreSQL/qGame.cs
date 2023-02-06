@@ -13,7 +13,7 @@ public sealed class qGame : IQGame
 
     private const string _add = @"
     INSERT INTO public.game(whites, blacks, turn, winner)
-	VALUES (@ID, 0, TRUE, 0) RETURNING id";
+	VALUES (@ID, NULL, TRUE, NULL) RETURNING id";
 
     private const string _delete = @"
     DELETE FROM public.game 
@@ -21,7 +21,7 @@ public sealed class qGame : IQGame
     
     private const string _update = @"
     UPDATE public.game
-	SET turn=@TURN, winner=@WINNER
+	SET blacks=@BLACKS
 	WHERE id=@ID";
 
     public string SQLGetAll => _selectAll;
@@ -39,5 +39,16 @@ public sealed class qGame : IQGame
     FROM public.team
     WHERE id=@ID";
 
+    private const string _playerIsValid = @"
+    SELECT tp.id
+    FROM public.team_player tp
+    WHERE tp.team_id = @BLACKS AND EXISTS (
+        SELECT tp2.id
+        FROM public.team_player tp2
+        WHERE tp2.team_id = @WHITES AND tp.player_id = tp2.player_id
+    )";
+
    public string TeamExists => _teamExists;
+
+   public string PlayerIsValid => _playerIsValid;
 }

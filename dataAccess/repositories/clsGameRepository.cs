@@ -20,7 +20,7 @@ public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel
         gameQueries = new qGame();
     }
 
-    public async Task<TI> createGame(clsNewGame game)
+    public async Task<TI> createGame(clsNewGame<TI> game)
     {
         var p = new DynamicParameters();
         p.Add("ID", game.whites);
@@ -34,15 +34,20 @@ public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel
         return await getEntity(id).ConfigureAwait(false);
     }
 
-    public async Task<TI>? updateGame(TI id, clsUpdateGame newGame)
+    public async Task<TI>? updateGame(TI id, clsUpdateGame<TI> newGame)
     {
         var gameExists = await getEntity(id).ConfigureAwait(false);
         if (gameExists == null) return default(TI);
         var p = new DynamicParameters();
+        p.Add("ID", newGame.blacks);
+        var teamExists = await set<TI>(p, null, gameQueries.TeamExists, null).ConfigureAwait(false);
+        if (teamExists.Equals(default(TI))) return default(TI);
+        p = new DynamicParameters();
         p.Add("ID", id);
-        p.Add("TURN", newGame.turn);
-        p.Add("TURN", newGame.turn);
-        p.Add("WINNER", newGame.winner);
+        p.Add("WHITES", gameExists.whites);
+        p.Add("BLACKS", newGame.blacks);
+        var playerIsValid = await set<TI>(p, null, gameQueries.PlayerIsValid, null).ConfigureAwait(false);
+        if (!playerIsValid.Equals(default(TI))) return default(TI);
         await set(p, null);
         return id;
     }

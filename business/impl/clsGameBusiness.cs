@@ -15,7 +15,7 @@ public sealed class clsGameBusiness<TI, TC> : IGameBusiness<TI>
         this.gameRepository = gameRepository;
     }
 
-    public async Task<clsGame<TI>> createGame(clsNewGame newGame)
+    public async Task<clsGame<TI>> createGame(clsNewGame<TI> newGame)
     {
         var x = await gameRepository.createGame(newGame).ConfigureAwait(false);
         if (x.Equals(default(TI))) return null;
@@ -29,10 +29,12 @@ public sealed class clsGameBusiness<TI, TC> : IGameBusiness<TI>
         if (x != null) return new clsGame<TI>(x.id, x.started, x.whites, x.blacks, x.turn, x.winner);
         return null;
     }
-    public async Task<clsGame<TI>>? updateGame(TI id, clsUpdateGame newGame)
+    public async Task<clsGame<TI>>? updateGame(TI id, clsUpdateGame<TI> newGame)
     {
+        var x = await gameRepository.getGameById(id).ConfigureAwait(false);
+        if (x == null) return null;
         var newId = await gameRepository.updateGame(id, newGame).ConfigureAwait(false);
-        var y = await gameRepository.getGameById(newId).ConfigureAwait(false);
-        return new clsGame<TI>(y.id, y.started, y.whites, y.blacks, y.turn, y.winner);
+        if (newId.Equals(default(TI))) return null;
+        return new clsGame<TI>(x.id, x.started, x.whites, newGame.blacks, x.turn, x.winner);
    }
 }

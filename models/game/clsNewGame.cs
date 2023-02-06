@@ -1,11 +1,12 @@
 namespace chessAPI.models.game;
 
-public sealed class clsNewGame
+public sealed class clsNewGame<TI>
+    where TI : struct, IEquatable<TI>
 {
     public clsNewGame()
     {
-        whites = 0;
+        whites = default(TI);
     }
 
-    public int whites { get; set; }
+    public TI whites { get; set; }
 }
