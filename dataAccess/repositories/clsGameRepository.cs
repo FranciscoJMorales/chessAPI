@@ -1,79 +1,45 @@
-using chessAPI.dataAccess.common;
-using chessAPI.dataAccess.interfaces;
 using chessAPI.dataAccess.models;
 using chessAPI.models.game;
-using chessAPI.dataAccess.queries.postgreSQL;
-using Dapper;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace chessAPI.dataAccess.repositores;
 
-public sealed class clsGameRepository<TI, TC> : clsDataAccess<clsGameEntityModel<TI, TC>, TI, TC>, IGameRepository<TI, TC>
-        where TI : struct, IEquatable<TI>
-        where TC : struct
+public sealed class clsGameRepository : IGameRepository
 {
-    private qGame gameQueries;
+    private readonly IMongoCollection<clsGameEntityModel> gameCollection;
 
-    public clsGameRepository(IRelationalContext<TC> rkm,
-                               ISQLData queries,
-                               ILogger<clsGameRepository<TI, TC>> logger) : base(rkm, queries, logger)
+    public clsGameRepository(IMongoCollection<clsGameEntityModel> gameCollection)
     {
-        gameQueries = new qGame();
+        this.gameCollection = gameCollection;
     }
 
-    public async Task<TI> createGame(clsNewGame<TI> game)
+    private async Task<long> getLastGame()
     {
-        var p = new DynamicParameters();
-        p.Add("ID", game.whites);
-        var teamExists = await set<TI>(p, null, gameQueries.TeamExists, null).ConfigureAwait(false);
-        if (teamExists.Equals(default(TI))) return default(TI);
-        return await add<TI>(p).ConfigureAwait(false);
+        //Empty document tells the driver to count all the documents in the collection
+        return await gameCollection.CountDocumentsAsync(new BsonDocument());
     }
 
-    public async Task<clsGameEntityModel<TI, TC>>? getGameById(TI id)
+    public async Task addGame(clsNewGame newGame)
     {
-        return await getEntity(id).ConfigureAwait(false);
+        var newId = await getLastGame().ConfigureAwait(false) + 1;
+        await gameCollection.InsertOneAsync(new clsGameEntityModel(newGame, newId)).ConfigureAwait(false);
     }
 
-    public async Task<TI>? updateGame(TI id, clsUpdateGame<TI> newGame)
+    public async Task<clsGameEntityModel?> getGame(long id)
     {
-        var gameExists = await getEntity(id).ConfigureAwait(false);
-        if (gameExists == null) return default(TI);
-        var p = new DynamicParameters();
-        p.Add("ID", newGame.blacks);
-        var teamExists = await set<TI>(p, null, gameQueries.TeamExists, null).ConfigureAwait(false);
-        if (teamExists.Equals(default(TI))) return default(TI);
-        p = new DynamicParameters();
-        p.Add("ID", id);
-        p.Add("WHITES", gameExists.whites);
-        p.Add("BLACKS", newGame.blacks);
-        var playerIsValid = await set<TI>(p, null, gameQueries.PlayerIsValid, null).ConfigureAwait(false);
-        if (!playerIsValid.Equals(default(TI))) return default(TI);
-        await set(p, null);
-        return id;
+        var filter = Builders<clsGameEntityModel>.Filter.Eq(r => r.id, id);
+        return await gameCollection.Find(filter).FirstOrDefaultAsync().ConfigureAwait(false);
     }
 
-    public Task deleteGame(TI id)
+    public async Task swapTurn(long id)
     {
-        throw new NotImplementedException();
-    }
-
-    protected override DynamicParameters fieldsAsParams(clsGameEntityModel<TI, TC> entity)
-    {
-        if (entity == null) throw new ArgumentNullException(nameof(entity));
-        var p = new DynamicParameters();
-        p.Add("ID", entity.id);
-        p.Add("STARTED", entity.started);
-        p.Add("WHITES", entity.whites);
-        p.Add("BLACKS", entity.blacks);
-        p.Add("TURN", entity.turn);
-        p.Add("WINNER", entity.winner);
-        return p;
-    }
-
-    protected override DynamicParameters keyAsParams(TI key)
-    {
-        var p = new DynamicParameters();
-        p.Add("ID", key);
-        return p;
+        var gameToSwap = await getGame(id).ConfigureAwait(false);
+        if (gameToSwap != null)
+        {
+            var update = Builders<clsGameEntityModel>.Update.Set(g => g.turn, !gameToSwap.turn);
+            var filter = Builders<clsGameEntityModel>.Filter.Eq(r => r.id, id);
+            await gameCollection.UpdateOneAsync(filter, update);
+        }
     }
 }

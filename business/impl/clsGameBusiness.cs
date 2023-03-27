@@ -1,40 +1,31 @@
-using chessAPI.business.interfaces;
 using chessAPI.dataAccess.repositores;
 using chessAPI.models.game;
+using chessAPI.business.interfaces;
 
 namespace chessAPI.business.impl;
 
-public sealed class clsGameBusiness<TI, TC> : IGameBusiness<TI> 
-    where TI : struct, IEquatable<TI>
-    where TC : struct
+public sealed class clsGameBusiness : IGameBusiness
 {
-    internal readonly IGameRepository<TI, TC> gameRepository;
+    internal readonly IGameRepository gameRepository;
 
-    public clsGameBusiness(IGameRepository<TI, TC> gameRepository)
+    public clsGameBusiness(IGameRepository gameRepository) => this.gameRepository = gameRepository;
+
+    public async Task startGame(clsNewGame newGame) => await gameRepository.addGame(newGame).ConfigureAwait(false);
+
+    public async Task<clsGame?> getGame(long id)
     {
-        this.gameRepository = gameRepository;
+        var x = await gameRepository.getGame(id).ConfigureAwait(false);
+        return x != null ? (clsGame)x : null;
     }
 
-    public async Task<clsGame<TI>> createGame(clsNewGame<TI> newGame)
+    public async Task<bool> swapTurn(long id)
     {
-        var x = await gameRepository.createGame(newGame).ConfigureAwait(false);
-        if (x.Equals(default(TI))) return null;
-        var y = await gameRepository.getGameById(x).ConfigureAwait(false);
-        return new clsGame<TI>(y.id, y.started, y.whites, y.blacks, y.turn, y.winner);
+        var x = await gameRepository.getGame(id).ConfigureAwait(false);
+        if (x != null)
+        {
+            await gameRepository.swapTurn(id).ConfigureAwait(false);
+            return true;
+        }
+        return false;
     }
-
-    public async Task<clsGame<TI>>? getGameById(TI id)
-    {
-        var x = await gameRepository.getGameById(id).ConfigureAwait(false);
-        if (x != null) return new clsGame<TI>(x.id, x.started, x.whites, x.blacks, x.turn, x.winner);
-        return null;
-    }
-    public async Task<clsGame<TI>>? updateGame(TI id, clsUpdateGame<TI> newGame)
-    {
-        var x = await gameRepository.getGameById(id).ConfigureAwait(false);
-        if (x == null) return null;
-        var newId = await gameRepository.updateGame(id, newGame).ConfigureAwait(false);
-        if (newId.Equals(default(TI))) return null;
-        return new clsGame<TI>(x.id, x.started, x.whites, newGame.blacks, x.turn, x.winner);
-   }
 }

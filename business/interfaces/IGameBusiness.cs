@@ -2,10 +2,9 @@ using chessAPI.models.game;
 
 namespace chessAPI.business.interfaces;
 
-public interface IGameBusiness<TI> 
-    where TI : struct, IEquatable<TI>
+public interface IGameBusiness
 {
-    Task<clsGame<TI>> createGame(clsNewGame<TI> newGame);
-    Task<clsGame<TI>>? getGameById(TI id);
-    Task<clsGame<TI>>? updateGame(TI id, clsUpdateGame<TI> newGame);
+    Task<clsGame?> getGame(long id);
+    Task startGame(clsNewGame newGame);
+    Task<bool> swapTurn(long id);
 }

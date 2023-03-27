@@ -39,48 +39,37 @@ try
     var app = builder.Build();
     app.UseSerilogRequestLogging();
     app.UseMiddleware(typeof(chessAPI.customMiddleware<int>));
-    app.MapGet("/", () =>
-    {
-        return "hola mundo";
-    });
 
-    app.MapGet("player/{id}",
-    [AllowAnonymous] async(IPlayerBusiness<int> bs, int id) => {
-        var player = await bs.getPlayerById(id);
-        if (player != null) return Results.Ok(player);
-        return Results.NotFound(id);
+    #region "REST routes"
+    app.MapGet("/", () => Results.BadRequest());
+
+    #region "Player REST Commands"
+    app.MapGet("game/{id}", async (IGameBusiness bs, long id) =>
+    {
+        var x = await bs.getGame(id).ConfigureAwait(false);
+        return x != null ? Results.Ok(x) : Results.NotFound();
     });
 
     app.MapPost("player",
-    [AllowAnonymous] async(IPlayerBusiness<int> bs, clsNewPlayer newPlayer) => Results.Ok(await bs.addPlayer(newPlayer)));
+    [AllowAnonymous] async (IPlayerBusiness<int> bs, clsNewPlayer newPlayer)
+        => Results.Ok(await bs.addPlayer(newPlayer).ConfigureAwait(false)));
+    #endregion
 
-    app.MapPut("player/{id}",
-    [AllowAnonymous] async(IPlayerBusiness<int> bs, int id, clsNewPlayer newPlayer) => {
-        var player = await bs.updatePlayer(id, newPlayer);
-        if (player != null) return Results.Ok(player);
-        return Results.NotFound(id);
-    });
-
-    app.MapGet("game/{id}",
-    [AllowAnonymous] async(IGameBusiness<int> bs, int id) => {
-        var game = await bs.getGameById(id);
-        if (game != null) return Results.Ok(game);
-        return Results.NotFound(id);
-    });
-
+    #region "Game REST Commands"
     app.MapPost("game",
-    [AllowAnonymous] async(IGameBusiness<int> bs, clsNewGame<int> newGame) => {
-        var game = await bs.createGame(newGame);
-        if (game != null) return Results.Ok(game);
-        return Results.NotFound(newGame.whites);
+    [AllowAnonymous] async (IGameBusiness bs, clsNewGame newGame) =>
+    {
+        await bs.startGame(newGame).ConfigureAwait(false);
+        return Results.Ok();
     });
-
-    app.MapPut("game/{id}",
-    [AllowAnonymous] async(IGameBusiness<int> bs, int id, clsUpdateGame<int> newGame) => {
-        var game = await bs.updateGame(id, newGame);
-        if (game != null) return Results.Ok(game);
-        return Results.BadRequest(id);
+    app.MapPut("/game/{id}/swapturn",
+    [AllowAnonymous] async (IGameBusiness bs, long id) =>
+    {
+        var didSwap = await bs.swapTurn(id).ConfigureAwait(false);
+        return didSwap ? Results.Ok() : Results.BadRequest();
     });
+    #endregion
+    #endregion
 
     app.Run();
 }
